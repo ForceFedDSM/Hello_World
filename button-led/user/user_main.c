@@ -85,7 +85,7 @@ struct  gpio {
 
 void relay(int aid, int iid, cJSON *value, int mode)
 {
-    /*GPIO_ConfigTypeDef gpio0_in_cfg;*/
+    GPIO_ConfigTypeDef gpio2_in_cfg;
     GPIO_ConfigTypeDef gpio5_in_cfg;
 
     switch (mode) {
@@ -108,6 +108,12 @@ void relay(int aid, int iid, cJSON *value, int mode)
             gpio5_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
             gpio5_in_cfg.GPIO_Pin      = GPIO_Pin_5;                    //Enable GPIO
             gpio_config(&gpio5_in_cfg);                                 //Initialization function
+         
+            gpio2_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
+            gpio2_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
+            gpio2_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
+            gpio2_in_cfg.GPIO_Pin      = GPIO_Pin_2;                    //Enable GPIO
+            gpio_config(&gpio2_in_cfg);                                 //Initialization function
             
             relay(aid,iid,value,1);
             gpio5.aid=aid; gpio5.iid=iid;
@@ -178,7 +184,7 @@ void    hkc_user_init(char *accname)
     addCharacteristic(chas,aid,++iid,APPLE,IDENTIFY_C,NULL,identify);
     //service 1
     chas=addService(      sers,++iid,APPLE,SWITCH_S);
-    addCharacteristic(chas,aid,++iid,APPLE,NAME_C,"led",NULL);
+    addCharacteristic(chas,aid,++iid,APPLE,NAME_C,"relay",NULL);
     addCharacteristic(chas,aid,++iid,APPLE,POWER_STATE_C,"1",relay);
 
     char *out;
@@ -214,7 +220,7 @@ void user_init(void)
     
     //try to only do the bare minimum here and do the rest in hkc_user_init
     // if not you could easily run out of stack space during pairing-setup
-    hkc_init("button-led");
+    hkc_init("WemosD1Relay");
     
     os_printf("end of user_init @ %d\n",system_get_time()/1000);
 }
