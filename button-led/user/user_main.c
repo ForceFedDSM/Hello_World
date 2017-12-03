@@ -66,10 +66,10 @@ struct  gpio {
     int aid;
     int iid;
   cJSON *value;
-} gpio2;
+} gpio5;
 
 
-void    led_intr()
+/*void    led_intr()
 {
     int             new;
     static uint32   oldtime;
@@ -81,34 +81,43 @@ void    led_intr()
         change_value(    gpio2.aid,gpio2.iid,gpio2.value);
         send_events(NULL,gpio2.aid,gpio2.iid);
     }
-}
+}*/
 
-void led(int aid, int iid, cJSON *value, int mode)
+void relay(int aid, int iid, cJSON *value, int mode)
 {
-    GPIO_ConfigTypeDef gpio0_in_cfg;
     GPIO_ConfigTypeDef gpio2_in_cfg;
+    GPIO_ConfigTypeDef gpio5_in_cfg;
 
     switch (mode) {
         case 1: { //changed by gui
-            char *out; out=cJSON_Print(value);  os_printf("led %s\n",out);  free(out);  // Print to text, print it, release the string.
-            if (value) GPIO_OUTPUT(GPIO_Pin_2, value->type);
+            char *out; out=cJSON_Print(value);  os_printf("relay %s\n",out);  free(out);  // Print to text, print it, release the string.
+            if (value) {
+                     GPIO_OUTPUT(GPIO_Pin_5, value->type);
+                     GPIO_OUTPUT(GPIO_Pin_2, value->type);
+                       }
         }break;
         case 0: { //init
-            gpio0_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_NEGEDGE;         //Falling edge trigger
-            gpio0_in_cfg.GPIO_Mode     = GPIO_Mode_Input;               //Input mode
-            gpio0_in_cfg.GPIO_Pin      = GPIO_Pin_0;                    //Enable GPIO
-            gpio_config(&gpio0_in_cfg);                                 //Initialization function
-            gpio_intr_callbacks[0]=led_intr;                           //define the Pin0 callback
+            //gpio0_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_NEGEDGE;         //Falling edge trigger
+            //gpio0_in_cfg.GPIO_Mode     = GPIO_Mode_Input;               //Input mode
+            //gpio0_in_cfg.GPIO_Pin      = GPIO_Pin_0;                    //Enable GPIO
+            //gpio_config(&gpio0_in_cfg);                                 //Initialization function
+            //gpio_intr_callbacks[0]=led_intr;                           //define the Pin0 callback
             
+            gpio5_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
+            gpio5_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
+            gpio5_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
+            gpio5_in_cfg.GPIO_Pin      = GPIO_Pin_5;                    //Enable GPIO
+            gpio_config(&gpio5_in_cfg);                                 //Initialization function
+         
             gpio2_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
             gpio2_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
             gpio2_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
             gpio2_in_cfg.GPIO_Pin      = GPIO_Pin_2;                    //Enable GPIO
             gpio_config(&gpio2_in_cfg);                                 //Initialization function
             
-            led(aid,iid,value,1);
-            gpio2.aid=aid; gpio2.iid=iid;
-            gpio2.value=cJSON_CreateBool(0); //value doesn't matter
+            relay(aid,iid,value,1);
+            gpio5.aid=aid; gpio5.iid=iid;
+            gpio5.value=cJSON_CreateBool(0); //value doesn't matter
         }break;
         case 2: { //update
             //do nothing
@@ -175,8 +184,8 @@ void    hkc_user_init(char *accname)
     addCharacteristic(chas,aid,++iid,APPLE,IDENTIFY_C,NULL,identify);
     //service 1
     chas=addService(      sers,++iid,APPLE,SWITCH_S);
-    addCharacteristic(chas,aid,++iid,APPLE,NAME_C,"led",NULL);
-    addCharacteristic(chas,aid,++iid,APPLE,POWER_STATE_C,"1",led);
+    addCharacteristic(chas,aid,++iid,APPLE,NAME_C,"relay",NULL);
+    addCharacteristic(chas,aid,++iid,APPLE,POWER_STATE_C,"1",relay);
 
     char *out;
     out=cJSON_Print(root);  os_printf("%s\n",out);  free(out);  // Print to text, print it, release the string.
@@ -186,8 +195,8 @@ void    hkc_user_init(char *accname)
 //      os_printf("1.%d=%s\n",iid,out); free(out);
 //  }
 
-    gpio_intr_handler_register(gpio_intr_handler,NULL);         //Register the interrupt function
-    GPIO_INTERRUPT_ENABLE;
+    //gpio_intr_handler_register(gpio_intr_handler,NULL);         //Register the interrupt function
+    //GPIO_INTERRUPT_ENABLE;
 }
 
 /******************************************************************************
@@ -211,7 +220,7 @@ void user_init(void)
     
     //try to only do the bare minimum here and do the rest in hkc_user_init
     // if not you could easily run out of stack space during pairing-setup
-    hkc_init("button-led");
+    hkc_init("WemosD1Relay");
     
     os_printf("end of user_init @ %d\n",system_get_time()/1000);
 }
