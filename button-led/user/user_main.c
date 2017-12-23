@@ -85,15 +85,15 @@ struct  gpio {
 
 void relay(int aid, int iid, cJSON *value, int mode)
 {
-    GPIO_ConfigTypeDef gpio2_in_cfg;
-    GPIO_ConfigTypeDef gpio5_in_cfg;
+    GPIO_ConfigTypeDef gpio13_in_cfg;
+    GPIO_ConfigTypeDef gpio12_in_cfg;
 
     switch (mode) {
         case 1: { //changed by gui
             char *out; out=cJSON_Print(value);  os_printf("relay %s\n",out);  free(out);  // Print to text, print it, release the string.
             if (value) {
-                     GPIO_OUTPUT(GPIO_Pin_5, value->type);
-                     GPIO_OUTPUT(GPIO_Pin_2, value->type);
+                     GPIO_OUTPUT(GPIO_Pin_12, value->type);
+                     GPIO_OUTPUT(GPIO_Pin_13, value->type);
                        }
         }break;
         case 0: { //init
@@ -103,21 +103,21 @@ void relay(int aid, int iid, cJSON *value, int mode)
             //gpio_config(&gpio0_in_cfg);                                 //Initialization function
             //gpio_intr_callbacks[0]=led_intr;                           //define the Pin0 callback
             
-            gpio5_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
-            gpio5_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
-            gpio5_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
-            gpio5_in_cfg.GPIO_Pin      = GPIO_Pin_5;                    //Enable GPIO
-            gpio_config(&gpio5_in_cfg);                                 //Initialization function
+            gpio12_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
+            gpio12_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
+            gpio12_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
+            gpio12_in_cfg.GPIO_Pin      = GPIO_Pin_12;                    //Enable GPIO
+            gpio_config(&gpio12_in_cfg);                                 //Initialization function
          
-            gpio2_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
-            gpio2_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
-            gpio2_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
-            gpio2_in_cfg.GPIO_Pin      = GPIO_Pin_2;                    //Enable GPIO
-            gpio_config(&gpio2_in_cfg);                                 //Initialization function
+            gpio13_in_cfg.GPIO_IntrType = GPIO_PIN_INTR_DISABLE;         //no interrupt
+            gpio13_in_cfg.GPIO_Mode     = GPIO_Mode_Output;              //Output mode
+            gpio13_in_cfg.GPIO_Pullup   = GPIO_PullUp_EN;                //improves transitions
+            gpio13_in_cfg.GPIO_Pin      = GPIO_Pin_13;                    //Enable GPIO
+            gpio_config(&gpio13_in_cfg);                                 //Initialization function
             
             relay(aid,iid,value,1);
-            gpio5.aid=aid; gpio5.iid=iid;
-            gpio5.value=cJSON_CreateBool(0); //value doesn't matter
+            gpio12.aid=aid; gpio12.iid=iid;
+            gpio12.value=cJSON_CreateBool(0); //value doesn't matter
         }break;
         case 2: { //update
             //do nothing
@@ -135,11 +135,11 @@ void identify_task(void *arg)
     os_printf("identify_task started\n");
     while(1) {
         while(!xQueueReceive(identifyQueue,NULL,10));//wait for a queue item
-        original=GPIO_INPUT(GPIO_Pin_2); //get original state
+        original=GPIO_INPUT(GPIO_Pin_13); //get original state
         for (i=0;i<2;i++) {
-            GPIO_OUTPUT(GPIO_Pin_2,original^1); // and toggle
+            GPIO_OUTPUT(GPIO_Pin_13,original^1); // and toggle
             vTaskDelay(30); //0.3 sec
-            GPIO_OUTPUT(GPIO_Pin_2,original^0);
+            GPIO_OUTPUT(GPIO_Pin_13,original^0);
             vTaskDelay(30); //0.3 sec
         }
     }
@@ -220,7 +220,7 @@ void user_init(void)
     
     //try to only do the bare minimum here and do the rest in hkc_user_init
     // if not you could easily run out of stack space during pairing-setup
-    hkc_init("WemosD1Relay");
+    hkc_init("SonoffBasic");
     
     os_printf("end of user_init @ %d\n",system_get_time()/1000);
 }
